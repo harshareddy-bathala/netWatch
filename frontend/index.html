@@ -1,0 +1,53 @@
+<!--
+index.html - Main Dashboard Page
+==================================
+
+This is the main dashboard page for NetWatch.
+
+OWNER: Member 3 (Frontend Developer)
+
+WHAT THIS FILE SHOULD CONTAIN:
+------------------------------
+1. HTML5 document structure with proper doctype
+
+2. Head section with:
+   - Page title: "NetWatch Dashboard"
+   - Bootstrap 5 CSS (CDN link)
+   - Chart.js (CDN link)
+   - Link to css/styles.css
+
+3. Navigation bar with:
+   - NetWatch logo/brand
+   - Links to: Dashboard (active), Devices, Alerts
+   - Network status indicator (green/yellow/red dot)
+
+4. Main content area with Bootstrap grid containing:
+   - Row 1: Metric cards (4 columns)
+     * Current Bandwidth (MB/s)
+     * Active Devices count
+     * Packets per Second
+     * Health Score (with color indicator)
+   
+   - Row 2: Charts (2 columns)
+     * Bandwidth History line chart (Chart.js canvas)
+     * Protocol Distribution pie chart (Chart.js canvas)
+   
+   - Row 3: Top Devices table
+     * Columns: IP Address, Hostname, Bandwidth Used, Last Seen
+     * Top 10 devices by bandwidth
+
+5. Footer with:
+   - Last updated timestamp
+   - Auto-refresh indicator
+
+6. Script tags at bottom:
+   - js/api.js
+   - js/charts.js
+   - js/dashboard.js
+
+7. The page should:
+   - Use Bootstrap 5 cards for metric displays
+   - Have responsive layout (col-md-6, col-lg-3, etc.)
+   - Include loading spinners for initial data load
+   - Show "No data" states when appropriate
+-->

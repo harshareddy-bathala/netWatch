@@ -1,0 +1,52 @@
+<!--
+devices.html - Device List Page
+================================
+
+This page displays all detected network devices with search and sort functionality.
+
+OWNER: Member 3 (Frontend Developer)
+
+WHAT THIS FILE SHOULD CONTAIN:
+------------------------------
+1. Same HTML5 structure and head section as index.html
+
+2. Navigation bar (same as index.html but Devices link is active)
+
+3. Page header:
+   - Title: "Network Devices"
+   - Device count badge
+   - Search input field
+
+4. Filter/Sort controls:
+   - Sort by: IP Address, Hostname, Bandwidth, Last Seen
+   - Sort order: Ascending/Descending toggle
+   - Filter: Show active only checkbox
+
+5. Devices table with columns:
+   - IP Address
+   - Hostname (editable - click to edit)
+   - Total Bandwidth Used (formatted as KB/MB/GB)
+   - First Seen (date/time)
+   - Last Seen (date/time)
+   - Status indicator (active/inactive based on last_seen)
+
+6. Pagination controls:
+   - Previous/Next buttons
+   - Page number display
+   - Items per page selector (10, 25, 50, 100)
+
+7. Edit hostname modal:
+   - Input field for new hostname
+   - Save/Cancel buttons
+   - Calls POST /api/devices/update-name on save
+
+8. Script tags:
+   - js/api.js
+   - js/devices.js (page-specific logic)
+
+9. Features:
+   - Client-side search filtering
+   - Client-side sorting
+   - Inline hostname editing
+   - Auto-refresh every 30 seconds
+-->

@@ -1,0 +1,65 @@
+/*
+styles.css - Custom Styles for NetWatch Dashboard
+===================================================
+
+This file contains custom CSS styles beyond Bootstrap defaults.
+
+OWNER: Member 3 (Frontend Developer)
+
+WHAT THIS FILE SHOULD CONTAIN:
+------------------------------
+1. CSS Variables for theming:
+   - --netwatch-primary: Main brand color
+   - --netwatch-success: Green for good/healthy
+   - --netwatch-warning: Orange for warnings
+   - --netwatch-danger: Red for critical
+   - --netwatch-dark: Dark background color
+   - --netwatch-light: Light text color
+
+2. Global styles:
+   - Body background color (dark theme recommended)
+   - Default font family
+   - Scrollbar styling
+
+3. Navigation styles:
+   - Custom navbar background
+   - Active link indicator
+   - Status dot animation (pulse effect)
+
+4. Card styles:
+   - Metric card styling with gradient backgrounds
+   - Card hover effects
+   - Icon styling within cards
+
+5. Chart container styles:
+   - Fixed height for chart containers
+   - Responsive sizing
+   - Loading overlay
+
+6. Table styles:
+   - Custom table header styling
+   - Row hover effects
+   - Status badges (active/inactive)
+   - Sortable column indicators
+
+7. Alert styles:
+   - Severity border colors
+   - Alert card animations (slide in)
+   - Timestamp styling
+
+8. Utility classes:
+   - .status-dot (animated status indicator)
+   - .pulse-animation
+   - .data-value (large number display)
+   - .trend-up, .trend-down (with arrows)
+
+9. Responsive adjustments:
+   - Mobile-specific styles
+   - Tablet breakpoint adjustments
+   - Hide non-essential elements on small screens
+
+10. Animations:
+    - Fade in for new data
+    - Pulse for live indicators
+    - Smooth transitions for value changes
+*/

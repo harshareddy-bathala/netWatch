@@ -1,0 +1,50 @@
+<!--
+alerts.html - Alerts Feed Page
+===============================
+
+This page displays all system alerts with filtering by severity.
+
+OWNER: Member 3 (Frontend Developer)
+
+WHAT THIS FILE SHOULD CONTAIN:
+------------------------------
+1. Same HTML5 structure and head section as index.html
+
+2. Navigation bar (same as index.html but Alerts link is active)
+
+3. Page header:
+   - Title: "System Alerts"
+   - Alert count badges by severity (info, warning, critical)
+   - Clear all resolved button
+
+4. Filter controls:
+   - Severity filter buttons: All, Info, Warning, Critical
+   - Date range selector: Last hour, 24 hours, 7 days
+   - Show resolved toggle
+
+5. Alerts feed (list/card layout):
+   - Each alert card shows:
+     * Severity indicator (color-coded left border)
+       - Green for info
+       - Orange/Yellow for warning
+       - Red for critical
+     * Alert type icon
+     * Alert message
+     * Timestamp (relative: "5 minutes ago")
+     * Resolve button (if not resolved)
+   
+6. Empty state:
+   - "No alerts" message when no alerts match filters
+   - Icon indicating healthy system
+
+7. Script tags:
+   - js/api.js
+   - js/alerts.js (page-specific logic)
+
+8. Features:
+   - Real-time updates (poll every 5 seconds)
+   - Severity-based color coding
+   - Click to expand alert details
+   - Resolve alert functionality
+   - Toast notifications for new critical alerts
+-->

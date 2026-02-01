@@ -1,0 +1,50 @@
+--
+-- schema.sql - NetWatch Database Schema
+-- =======================================
+--
+-- This file defines the database schema for NetWatch.
+--
+-- OWNER: Member 5 (Database + Documentation)
+--
+-- WHAT THIS FILE SHOULD CONTAIN:
+-- ------------------------------
+-- 1. CREATE TABLE statements for:
+--
+--    devices table:
+--    - id: INTEGER PRIMARY KEY AUTOINCREMENT
+--    - ip_address: TEXT NOT NULL UNIQUE
+--    - hostname: TEXT (user-assigned name, nullable)
+--    - first_seen: TIMESTAMP NOT NULL
+--    - last_seen: TIMESTAMP NOT NULL
+--    - total_bytes: INTEGER DEFAULT 0
+--
+--    traffic_summary table:
+--    - id: INTEGER PRIMARY KEY AUTOINCREMENT
+--    - timestamp: TIMESTAMP NOT NULL
+--    - source_ip: TEXT NOT NULL
+--    - dest_ip: TEXT NOT NULL
+--    - protocol: TEXT NOT NULL
+--    - bytes_transferred: INTEGER NOT NULL
+--    - source_port: INTEGER (nullable)
+--    - dest_port: INTEGER (nullable)
+--
+--    alerts table:
+--    - id: INTEGER PRIMARY KEY AUTOINCREMENT
+--    - timestamp: TIMESTAMP NOT NULL
+--    - alert_type: TEXT NOT NULL (bandwidth, anomaly, device_count, health)
+--    - severity: TEXT NOT NULL (info, warning, critical)
+--    - message: TEXT NOT NULL
+--    - resolved: BOOLEAN DEFAULT FALSE
+--    - resolved_at: TIMESTAMP (nullable)
+--
+-- 2. CREATE INDEX statements for:
+--    - idx_traffic_timestamp ON traffic_summary(timestamp)
+--    - idx_traffic_source_ip ON traffic_summary(source_ip)
+--    - idx_traffic_dest_ip ON traffic_summary(dest_ip)
+--    - idx_traffic_protocol ON traffic_summary(protocol)
+--    - idx_devices_ip ON devices(ip_address)
+--    - idx_alerts_timestamp ON alerts(timestamp)
+--    - idx_alerts_severity ON alerts(severity)
+--
+-- 3. Comments explaining each table's purpose
+--
