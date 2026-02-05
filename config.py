@@ -3,6 +3,26 @@
 # Modify these values to customize the behavior of the application.
 
 import os
+from datetime import timedelta
+
+# =============================================================================
+# APPLICATION ENVIRONMENT
+# =============================================================================
+
+# Application environment: 'development', 'production', or 'testing'
+APP_ENV = os.getenv('NETWATCH_ENV', 'development')
+
+# Application name
+APP_NAME = "NetWatch"
+
+# Application version
+APP_VERSION = "1.0.0"
+
+# Debug mode (disable in production)
+DEBUG_MODE = APP_ENV == 'development'
+
+# Allow insecure requests (HTTP) - set to False in production
+ALLOW_INSECURE_REQUESTS = APP_ENV != 'production'
 
 # =============================================================================
 # DATABASE CONFIGURATION
@@ -41,7 +61,20 @@ FLASK_HOST = "0.0.0.0"
 FLASK_PORT = 5000
 
 # Enable Flask debug mode (set to False in production)
-FLASK_DEBUG = True
+FLASK_DEBUG = APP_ENV == 'development'
+
+# Flask session configuration
+SESSION_COOKIE_SECURE = APP_ENV == 'production'  # Require HTTPS for cookies in production
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+PERMANENT_SESSION_LIFETIME = timedelta(hours=24)  # Session timeout
+
+# Flask JSON configuration
+JSON_SORT_KEYS = False
+JSONIFY_PRETTYPRINT_REGULAR = APP_ENV == 'development'
+
+# Maximum request size in bytes (default 16MB)
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
 # =============================================================================
 # ANOMALY DETECTION THRESHOLDS
@@ -147,3 +180,507 @@ LOG_FILE = None
 
 # Log format string
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# =============================================================================
+# CORS CONFIGURATION
+# =============================================================================
+
+# Allowed origins for CORS (in production, restrict these)
+CORS_ORIGINS = ["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:3000"]
+
+# Allow credentials in CORS requests
+CORS_ALLOW_CREDENTIALS = True
+
+# =============================================================================
+# ALERT SEVERITY LEVELS
+# =============================================================================
+
+# Alert severity levels
+ALERT_SEVERITY_LOW = "low"
+ALERT_SEVERITY_MEDIUM = "medium"
+ALERT_SEVERITY_HIGH = "high"
+ALERT_SEVERITY_CRITICAL = "critical"
+
+# Alert severity thresholds (for automatic classification)
+ALERT_SEVERITY_MAPPING = {
+    "bandwidth_warning": ALERT_SEVERITY_MEDIUM,
+    "bandwidth_critical": ALERT_SEVERITY_CRITICAL,
+    "device_count_warning": ALERT_SEVERITY_LOW,
+    "device_count_critical": ALERT_SEVERITY_HIGH,
+    "anomaly_detected": ALERT_SEVERITY_HIGH,
+    "packet_loss": ALERT_SEVERITY_MEDIUM,
+}
+
+# =============================================================================
+# THREADING CONFIGURATION
+# =============================================================================
+
+# Number of worker threads for packet processing (0 = auto-detect CPU count)
+PACKET_WORKER_THREADS = 0
+
+# Queue size for buffering packets between capture and processing
+PACKET_QUEUE_MAX_SIZE = 10000
+
+# Timeout for queue operations in seconds
+QUEUE_TIMEOUT_SECONDS = 1
+
+# =============================================================================
+# ANOMALY DETECTION FEATURE ENGINEERING
+# =============================================================================
+
+# Features to extract for anomaly detection model
+ANOMALY_DETECTION_FEATURES = [
+    "total_bandwidth",
+    "active_connections",
+    "unique_protocols",
+    "packet_loss_rate",
+    "average_latency",
+    "dns_queries_count",
+    "http_requests_count",
+    "https_requests_count",
+]
+
+# =============================================================================
+# API RESPONSE CONFIGURATION
+# =============================================================================
+
+# Maximum number of records to return in a single API response
+MAX_API_RESPONSE_SIZE = 1000
+
+# Default page size for paginated API responses
+DEFAULT_PAGE_SIZE = 50
+
+# API request timeout in seconds
+API_REQUEST_TIMEOUT = 30
+
+# =============================================================================
+# DEVICE DISCOVERY CONFIGURATION
+# =============================================================================
+
+# Time in seconds to consider a device as "active" without new packets
+DEVICE_INACTIVITY_TIMEOUT = 300  # 5 minutes
+
+# Minimum number of packets from a device to track it
+MIN_PACKETS_TO_TRACK_DEVICE = 5
+
+# =============================================================================
+# DATA AGGREGATION CONFIGURATION
+# =============================================================================
+
+# Interval for aggregating traffic statistics (in seconds)
+TRAFFIC_STATS_AGGREGATION_INTERVAL = 60
+
+# Number of aggregation periods to keep in memory
+AGGREGATION_PERIODS_IN_MEMORY = 1440  # 24 hours if aggregation_interval is 60s
+
+# =============================================================================
+# EXPORT AND REPORTING CONFIGURATION
+# =============================================================================
+
+# Enable data export functionality
+ENABLE_DATA_EXPORT = True
+
+# Supported export formats
+EXPORT_FORMATS = ["csv", "json", "xlsx"]
+
+# Maximum export size in records
+MAX_EXPORT_RECORDS = 100000
+
+# =============================================================================
+# SCAPY CONFIGURATION
+# =============================================================================
+
+# Scapy packet capture verbose level (0 = off, 1 = on)
+SCAPY_VERBOSE = 0
+
+# Packet filter (BPF syntax) - None means capture all
+# Example: "tcp port 80 or tcp port 443" to capture HTTP/HTTPS only
+PACKET_FILTER = None
+
+# =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+
+# Enable real-time alerts
+ENABLE_REALTIME_ALERTS = True
+
+# Enable anomaly detection
+ENABLE_ANOMALY_DETECTION = True
+
+# Enable device tracking
+ENABLE_DEVICE_TRACKING = True
+
+# Enable protocol detection
+ENABLE_PROTOCOL_DETECTION = True
+
+# =============================================================================
+# TIMEZONE AND LOCALIZATION
+# =============================================================================
+
+# Timezone for the application (use IANA timezone format)
+TIMEZONE = "UTC"
+
+# Date format for API responses
+DATE_FORMAT = "%Y-%m-%d"
+
+# DateTime format for API responses
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+# Timestamp precision in milliseconds
+TIMESTAMP_PRECISION_MS = True
+
+# =============================================================================
+# CACHING CONFIGURATION
+# =============================================================================
+
+# Enable caching
+ENABLE_CACHING = True
+
+# Cache type: 'simple', 'redis', or 'memcached'
+CACHE_TYPE = 'simple'
+
+# Cache default timeout in seconds
+CACHE_DEFAULT_TIMEOUT = 300
+
+# Cache key prefix
+CACHE_KEY_PREFIX = "netwatch_"
+
+# Redis configuration (if CACHE_TYPE is 'redis')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
+# Cache TTL for different data types
+CACHE_TTL_DEVICE_LIST = 60  # 1 minute
+CACHE_TTL_TRAFFIC_STATS = 30  # 30 seconds
+CACHE_TTL_ALERTS = 15  # 15 seconds
+CACHE_TTL_HEALTH_SCORE = 60  # 1 minute
+
+# =============================================================================
+# INPUT VALIDATION CONFIGURATION
+# =============================================================================
+
+# Maximum length for device names
+MAX_DEVICE_NAME_LENGTH = 255
+
+# Maximum length for descriptions
+MAX_DESCRIPTION_LENGTH = 1000
+
+# Valid IP address formats (IPv4, IPv6)
+VALID_IP_VERSIONS = [4, 6]
+
+# Maximum number of IPs to accept in a filter
+MAX_IPS_IN_FILTER = 1000
+
+# Regular expression patterns for validation
+VALID_MAC_ADDRESS_PATTERN = r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$'
+VALID_IPADDR_PATTERN_V4 = r'^(\d{1,3}\.){3}\d{1,3}$'
+
+# =============================================================================
+# RATE LIMITING CONFIGURATION
+# =============================================================================
+
+# Enable rate limiting
+ENABLE_RATE_LIMITING = APP_ENV == 'production'
+
+# Rate limit: requests per minute per IP
+RATE_LIMIT_REQUESTS_PER_MINUTE = 100
+
+# Rate limit: requests per hour per IP
+RATE_LIMIT_REQUESTS_PER_HOUR = 2000
+
+# Bypass rate limiting for localhost
+RATE_LIMIT_BYPASS_LOCALHOST = True
+
+# =============================================================================
+# ERROR RECOVERY CONFIGURATION
+# =============================================================================
+
+# Maximum number of retries for failed operations
+MAX_RETRIES = 3
+
+# Retry delay in seconds (exponential backoff)
+RETRY_DELAY_SECONDS = 1
+
+# Retry backoff multiplier
+RETRY_BACKOFF_MULTIPLIER = 2
+
+# Database connection retry attempts
+DB_CONNECTION_RETRIES = 5
+
+# Database connection retry delay in seconds
+DB_CONNECTION_RETRY_DELAY = 2
+
+# =============================================================================
+# MEMORY AND PERFORMANCE OPTIMIZATION
+# =============================================================================
+
+# Maximum size of in-memory packet buffer (in packets)
+PACKET_BUFFER_MAX_SIZE = 50000
+
+# Maximum size of in-memory device cache
+DEVICE_CACHE_MAX_SIZE = 10000
+
+# Garbage collection interval in seconds
+GARBAGE_COLLECTION_INTERVAL = 300
+
+# Enable memory profiling (development only)
+ENABLE_MEMORY_PROFILING = APP_ENV == 'development'
+
+# =============================================================================
+# BATCH PROCESSING CONFIGURATION
+# =============================================================================
+
+# Batch size for bulk database operations
+DB_BATCH_SIZE = 1000
+
+# Batch size for API responses
+API_BATCH_SIZE = 100
+
+# Time window for batch aggregation in seconds
+BATCH_AGGREGATION_WINDOW = 60
+
+# Maximum items per batch operation
+MAX_BATCH_ITEMS = 5000
+
+# =============================================================================
+# MONITORING AND METRICS CONFIGURATION
+# =============================================================================
+
+# Enable metrics collection
+ENABLE_METRICS = True
+
+# Enable application performance monitoring (APM)
+ENABLE_APM = APP_ENV == 'production'
+
+# Metrics retention period in days
+METRICS_RETENTION_DAYS = 30
+
+# Metrics collection interval in seconds
+METRICS_COLLECTION_INTERVAL = 60
+
+# Track API response times
+TRACK_API_RESPONSE_TIMES = True
+
+# Track database query performance
+TRACK_DB_QUERY_PERFORMANCE = APP_ENV == 'development'
+
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+
+# Secret key for session management and CSRF protection
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# API key validation (if applicable)
+ENABLE_API_KEY_AUTH = False
+
+# HTTPS enforcement
+ENFORCE_HTTPS = APP_ENV == 'production'
+
+# Enable CORS (Cross-Origin Resource Sharing)
+ENABLE_CORS = True
+
+# Allowed HTTP methods
+ALLOWED_HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
+
+# Disable HTTP methods if needed
+DISABLED_HTTP_METHODS = []
+
+# X-Frame-Options header to prevent clickjacking
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# Content Security Policy
+CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+
+# =============================================================================
+# DATABASE PERFORMANCE TUNING
+# =============================================================================
+
+# SQLite PRAGMA settings
+DB_JOURNAL_MODE = 'WAL'  # Write-Ahead Logging for better concurrency
+DB_SYNCHRONOUS = 'NORMAL'  # Balance between safety and performance
+DB_CACHE_SIZE = -64000  # 64MB cache
+DB_TEMP_STORE = 'MEMORY'  # Use memory for temporary tables
+DB_FOREIGN_KEYS = True  # Enable foreign key constraints
+DB_BUSY_TIMEOUT = 5000  # Wait 5 seconds on locked database
+
+# Connection pooling
+DB_CONNECTION_POOL_SIZE = 5
+DB_POOL_RECYCLE = 3600  # Recycle connections after 1 hour
+
+# Query optimization
+DB_QUERY_TIMEOUT = 30  # Maximum query execution time in seconds
+DB_EXPLAIN_QUERY_PLAN = APP_ENV == 'development'
+
+# =============================================================================
+# FILE UPLOAD AND EXPORT CONFIGURATION
+# =============================================================================
+
+# Upload directory for temporary files
+UPLOAD_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+
+# Allowed file extensions for upload
+ALLOWED_UPLOAD_EXTENSIONS = ['txt', 'csv', 'json']
+
+# Maximum file upload size in bytes (10MB)
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+# Export directory
+EXPORT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
+
+# Compression for exports
+COMPRESS_EXPORTS = True
+
+# =============================================================================
+# API CONFIGURATION
+# =============================================================================
+
+# API version
+API_VERSION = "v1"
+
+# API base path
+API_BASE_PATH = f"/api/{API_VERSION}"
+
+# Enable API documentation
+ENABLE_API_DOCS = True
+
+# API documentation path
+API_DOCS_PATH = "/api/docs"
+
+# Paginate responses by default
+DEFAULT_PAGINATION_ENABLED = True
+
+# Sort responses by default
+DEFAULT_SORT_ENABLED = True
+
+# Allow filtering by default
+DEFAULT_FILTERING_ENABLED = True
+
+# =============================================================================
+# DASHBOARD CONFIGURATION
+# =============================================================================
+
+# Dashboard refresh interval in seconds (frontend polling)
+DASHBOARD_REFRESH_INTERVAL = 3
+
+# Maximum number of devices to display in real-time view
+MAX_DEVICES_IN_REALTIME_VIEW = 100
+
+# Maximum number of alerts to display in dashboard
+MAX_ALERTS_IN_DASHBOARD = 50
+
+# Chart update frequency in seconds
+CHART_UPDATE_FREQUENCY = 5
+
+# Default time range for historical data (in hours)
+DEFAULT_HISTORY_RANGE_HOURS = 24
+
+# Enable real-time WebSocket updates (if implemented)
+ENABLE_WEBSOCKET_UPDATES = False
+
+# =============================================================================
+# NOTIFICATION CONFIGURATION
+# =============================================================================
+
+# Enable notifications
+ENABLE_NOTIFICATIONS = True
+
+# Notification methods
+NOTIFICATION_METHODS = ['in_app']  # ['in_app', 'email', 'sms']
+
+# Email notification settings (if email notifications enabled)
+SMTP_SERVER = os.getenv('SMTP_SERVER', 'localhost')
+SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
+SMTP_USERNAME = os.getenv('SMTP_USERNAME', '')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')
+SMTP_USE_TLS = True
+EMAIL_FROM_ADDRESS = os.getenv('EMAIL_FROM_ADDRESS', 'netwatch@example.com')
+
+# Notification throttling (prevent alert fatigue)
+NOTIFICATION_THROTTLE_SECONDS = 300  # Don't send same alert more than once per 5 minutes
+
+# =============================================================================
+# PACKET CAPTURE ADVANCED SETTINGS
+# =============================================================================
+
+# Enable promiscuous mode (capture all packets on network)
+ENABLE_PROMISCUOUS_MODE = True
+
+# Packet snaplen (packet size to capture in bytes)
+PACKET_SNAPLEN = 65535  # Capture full packet
+
+# Enable hardware acceleration if available
+ENABLE_HW_ACCELERATION = True
+
+# Packet capture error handling
+CAPTURE_ERROR_RECOVERY = True
+CAPTURE_ERROR_MAX_RETRIES = 5
+
+# =============================================================================
+# STATISTICS AND REPORTING
+# =============================================================================
+
+# Enable detailed statistics
+ENABLE_DETAILED_STATS = True
+
+# Report generation interval in hours
+REPORT_GENERATION_INTERVAL = 24
+
+# Number of top N items to track (top devices, top protocols, etc.)
+TOP_ITEMS_COUNT = 10
+
+# Statistical percentiles to track (for latency, bandwidth)
+PERCENTILES = [50, 75, 90, 95, 99]
+
+# =============================================================================
+# CLEANUP AND MAINTENANCE
+# =============================================================================
+
+# Enable automatic cleanup tasks
+ENABLE_AUTO_CLEANUP = True
+
+# Cleanup check interval in seconds
+CLEANUP_CHECK_INTERVAL = 3600  # 1 hour
+
+# Database maintenance interval in seconds
+DB_MAINTENANCE_INTERVAL = 86400  # 24 hours
+
+# Empty trash/temp files older than (in days)
+TRASH_CLEANUP_DAYS = 7
+
+# =============================================================================
+# TESTING CONFIGURATION
+# =============================================================================
+
+# Test mode flag
+TEST_MODE = APP_ENV == 'testing'
+
+# Use mock data in test mode
+USE_MOCK_DATA = TEST_MODE
+
+# Test database path
+TEST_DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_netwatch.db")
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+# Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = "INFO" if APP_ENV == 'production' else "DEBUG"
+
+# Log file path (None = console only)
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "netwatch.log") if APP_ENV == 'production' else None
+
+# Log format string
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Log file maximum size in bytes (10MB)
+LOG_FILE_MAX_SIZE = 10 * 1024 * 1024
+
+# Number of log files to keep (rotation)
+LOG_FILE_BACKUP_COUNT = 10
+
+# Enable request logging
+ENABLE_REQUEST_LOGGING = APP_ENV == 'development'
+
+# Enable database query logging
+ENABLE_QUERY_LOGGING = APP_ENV == 'development'

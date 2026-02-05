@@ -52,3 +52,61 @@ def main():
 if __name__ == "__main__":
     main()
 """
+
+import threading
+import signal
+import sys
+import logging
+from config import *
+
+# Will be filled in as modules are ready
+from database.init_db import initialize_database
+from packet_capture.monitor import NetworkMonitor
+from alerts.detector import AnomalyDetector
+from backend.app import create_app
+
+logger = logging.getLogger(__name__)
+shutdown_event = threading.Event()
+
+def setup_logging():
+    logging.basicConfig(
+        level=getattr(logging, LOG_LEVEL),
+        format=LOG_FORMAT
+    )
+
+def signal_handler(signum, frame):
+    logger.info("Shutdown signal received")
+    shutdown_event.set()
+
+def main():
+    setup_logging()
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    logger.info("Initializing database...")
+    try:
+        initialize_database()
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        sys.exit(1)
+    
+    logger.info("Starting packet capture...")
+    monitor = NetworkMonitor()
+    monitor_thread = threading.Thread(target=monitor.run, daemon=True)
+    monitor_thread.start()
+    
+    logger.info("Starting anomaly detector...")
+    detector = AnomalyDetector()
+    detector_thread = threading.Thread(target=detector.run, daemon=True)
+    detector_thread.start()
+    
+    logger.info(f"Starting Flask server on {FLASK_HOST}:{FLASK_PORT}")
+    app = create_app()
+    try:
+        app.run(host=FLASK_HOST, port=FLASK_PORT)
+    except Exception as e:
+        logger.error(f"Flask server failed: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
