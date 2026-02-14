@@ -1,50 +1,194 @@
-<!--
-alerts.html - Alerts Feed Page
-===============================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetWatch - System Alerts and Notifications">
+    <title>System Alerts - NetWatch</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <span style="font-size: 1.2rem;">🔍</span> NetWatch
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="devices.html">Devices</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="alerts.html">Alerts</a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <span class="text-light me-2">Network Status</span>
+                    <span class="status-dot healthy" id="statusDot"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-This page displays all system alerts with filtering by severity.
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="text-light mb-1">System Alerts</h2>
+                <p class="text-muted mb-0">Network anomalies and security notifications</p>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-light btn-sm" id="clearResolvedBtn">
+                    Clear Resolved
+                </button>
+            </div>
+        </div>
 
-OWNER: Member 3 (Frontend Developer)
+        <!-- Alert Count Badges -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge" style="background-color: #3b82f6; font-size: 1rem; padding: 0.5rem 1rem;">
+                        ℹ️ Info: <span id="infoCount">0</span>
+                    </span>
+                    <span class="badge" style="background-color: #f59e0b; font-size: 1rem; padding: 0.5rem 1rem;">
+                        ⚠️ Warning: <span id="warningCount">0</span>
+                    </span>
+                    <span class="badge" style="background-color: #ef4444; font-size: 1rem; padding: 0.5rem 1rem;">
+                        🚨 Critical: <span id="criticalCount">0</span>
+                    </span>
+                    <span class="badge bg-secondary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                        Total: <span id="totalCount">0</span>
+                    </span>
+                </div>
+            </div>
+        </div>
 
-WHAT THIS FILE SHOULD CONTAIN:
-------------------------------
-1. Same HTML5 structure and head section as index.html
+        <!-- Filter Controls -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-6 col-lg-3 mb-3 mb-lg-0">
+                                <label class="form-label text-light mb-2">Severity Filter:</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="severityFilter" id="filterAll" value="all" checked>
+                                    <label class="btn btn-outline-primary" for="filterAll">All</label>
+                                    
+                                    <input type="radio" class="btn-check" name="severityFilter" id="filterInfo" value="info">
+                                    <label class="btn btn-outline-primary" for="filterInfo">Info</label>
+                                    
+                                    <input type="radio" class="btn-check" name="severityFilter" id="filterWarning" value="warning">
+                                    <label class="btn btn-outline-warning" for="filterWarning">Warning</label>
+                                    
+                                    <input type="radio" class="btn-check" name="severityFilter" id="filterCritical" value="critical">
+                                    <label class="btn btn-outline-danger" for="filterCritical">Critical</label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-md-6 col-lg-3 mb-3 mb-lg-0">
+                                <label class="form-label text-light mb-2">Time Range:</label>
+                                <select class="form-select bg-dark text-light border-secondary" id="timeRange">
+                                    <option value="1">Last Hour</option>
+                                    <option value="24" selected>Last 24 Hours</option>
+                                    <option value="168">Last 7 Days</option>
+                                    <option value="720">Last 30 Days</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-12 col-md-6 col-lg-3 mb-3 mb-lg-0">
+                                <label class="form-label text-light mb-2">&nbsp;</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="showResolvedToggle">
+                                    <label class="form-check-label text-light" for="showResolvedToggle">
+                                        Show Resolved
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label class="form-label text-light mb-2">&nbsp;</label>
+                                <button class="btn btn-primary w-100" id="refreshAlertsBtn">
+                                    🔄 Refresh Alerts
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-2. Navigation bar (same as index.html but Alerts link is active)
+        <!-- Alerts Feed -->
+        <div class="row">
+            <div class="col-12">
+                <div id="alertsFeed">
+                    <!-- Alerts will be loaded here by JavaScript -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted">Loading alerts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-3. Page header:
-   - Title: "System Alerts"
-   - Alert count badges by severity (info, warning, critical)
-   - Clear all resolved button
+        <!-- Empty State (hidden by default, shown when no alerts) -->
+        <div class="row d-none" id="emptyState">
+            <div class="col-12">
+                <div class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <div class="empty-state-text">No alerts found</div>
+                    <div class="empty-state-subtext">Your network is running smoothly</div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-4. Filter controls:
-   - Severity filter buttons: All, Info, Warning, Critical
-   - Date range selector: Last hour, 24 hours, 7 days
-   - Show resolved toggle
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 last-updated" id="lastUpdated">Last updated: --:--:--</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="auto-refresh-indicator">
+                        <span class="refresh-icon">🔄</span>
+                        <span>Auto-refreshing every 5 seconds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-5. Alerts feed (list/card layout):
-   - Each alert card shows:
-     * Severity indicator (color-coded left border)
-       - Green for info
-       - Orange/Yellow for warning
-       - Red for critical
-     * Alert type icon
-     * Alert message
-     * Timestamp (relative: "5 minutes ago")
-     * Resolve button (if not resolved)
-   
-6. Empty state:
-   - "No alerts" message when no alerts match filters
-   - Icon indicating healthy system
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+        <!-- Toasts will be inserted here by JavaScript -->
+    </div>
 
-7. Script tags:
-   - js/api.js
-   - js/alerts.js (page-specific logic)
-
-8. Features:
-   - Real-time updates (poll every 5 seconds)
-   - Severity-based color coding
-   - Click to expand alert details
-   - Resolve alert functionality
-   - Toast notifications for new critical alerts
--->
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- NetWatch JavaScript Modules -->
+    <script src="js/api.js"></script>
+    <script src="js/alerts.js"></script>
+</body>
+</html>

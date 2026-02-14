@@ -3,22 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetWatch - Real-time Network Traffic Monitoring Dashboard">
     <title>NetWatch Dashboard</title>
+    
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Styles -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">
-                <span class="status-dot"></span> NetWatch
+                <span style="font-size: 1.2rem;">🔍</span> NetWatch
             </a>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="index.html">Dashboard</a>
                     </li>
@@ -29,54 +39,88 @@
                         <a class="nav-link" href="alerts.html">Alerts</a>
                     </li>
                 </ul>
+                
+                <div class="d-flex align-items-center">
+                    <span class="text-light me-2">Network Status</span>
+                    <span class="status-dot healthy" id="statusDot"></span>
+                </div>
             </div>
         </div>
     </nav>
-<div class="container-fluid mt-4">
- <div class="row mb-4">
-           <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card metric-card">
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h2 class="text-light mb-1">Dashboard Overview</h2>
+                <p class="text-muted mb-0">Real-time network monitoring and analytics</p>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" id="refreshButton">
+                    <span>🔄</span> Refresh Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric Cards Row -->
+        <div class="row g-4 mb-4">
+            <!-- Current Bandwidth -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card metric-card h-100">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">Current Bandwidth</h6>
-                        <h2 class="data-value" id="bandwidthValue">0</h2>
-                        <small>MB/s</small>
+                        <div class="metric-icon">📊</div>
+                        <div class="data-label">Current Bandwidth</div>
+                        <div class="data-value" id="bandwidthValue">0.00</div>
+                        <small class="text-muted">MB/s</small>
                     </div>
                 </div>
             </div>
-      <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card metric-card">
+
+            <!-- Active Devices -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card metric-card success h-100">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">Active Devices</h6>
-                        <h2 class="data-value" id="devicesValue">0</h2>
-                        <small>devices</small>
+                        <div class="metric-icon">💻</div>
+                        <div class="data-label">Active Devices</div>
+                        <div class="data-value" id="activeDevicesValue">0</div>
+                        <small class="text-muted">connected</small>
                     </div>
                 </div>
             </div>
-         <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card metric-card">
+
+            <!-- Packets per Second -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card metric-card warning h-100">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">Packets/Second</h6>
-                        <h2 class="data-value" id="packetsValue">0</h2>
-                        <small>pps</small>
+                        <div class="metric-icon">📦</div>
+                        <div class="data-label">Packets/Second</div>
+                        <div class="data-value" id="packetsValue">0</div>
+                        <small class="text-muted">pkt/s</small>
                     </div>
                 </div>
             </div>
-<div class="col-md-6 col-lg-3 mb-3">
-                <div class="card metric-card">
+
+            <!-- Health Score -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card metric-card h-100" id="healthScoreCard">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2 text-muted">Health Score</h6>
-                        <h2 class="data-value" id="healthValue">0</h2>
-                        <small id="healthStatus">Good</small>
+                        <div class="metric-icon">❤️</div>
+                        <div class="data-label">Health Score</div>
+                        <div class="data-value" id="healthScoreValue">0</div>
+                        <small class="text-muted">out of 100</small>
                     </div>
                 </div>
             </div>
         </div>
- <div class="row mb-4">
-         
-            <div class="col-md-6 mb-3">
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <!-- Bandwidth History Chart -->
+            <div class="col-12 col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Bandwidth History</h5>
+                        <h5 class="mb-0">📈 Bandwidth History (Last Hour)</h5>
                     </div>
                     <div class="card-body">
                         <div class="chart-container">
@@ -85,10 +129,12 @@
                     </div>
                 </div>
             </div>
-<div class="col-md-6 mb-3">
+
+            <!-- Protocol Distribution Chart -->
+            <div class="col-12 col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5>Protocol Distribution</h5>
+                        <h5 class="mb-0">🎯 Protocol Distribution</h5>
                     </div>
                     <div class="card-body">
                         <div class="chart-container">
@@ -98,26 +144,34 @@
                 </div>
             </div>
         </div>
-<div class="row">
+
+        <!-- Top Devices Table -->
+        <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5>Top Devices by Bandwidth</h5>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">🏆 Top Devices by Bandwidth</h5>
+                        <span class="badge bg-primary">Top 10</span>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th>IP Address</th>
                                         <th>Hostname</th>
                                         <th>Bandwidth Used</th>
-                                        <th>Last Seen</th>
+                                        <th class="hide-mobile">Last Seen</th>
                                     </tr>
                                 </thead>
-                                <tbody id="devicesTableBody">
+                                <tbody id="topDevicesTable">
                                     <tr>
-                                        <td colspan="4" class="text-center">Loading...</td>
+                                        <td colspan="4" class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="text-muted mt-2">Loading devices...</p>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -126,15 +180,40 @@
                 </div>
             </div>
         </div>
-    </div>
-<footer class="text-center mt-4 mb-3">
-        <small class="text-muted">
-            Last updated: <span id="lastUpdated">Never</span>
-            <span class="ms-3">Auto-refresh: <span class="status-dot"></span></span>
-        </small>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 last-updated" id="lastUpdated">Last updated: --:--:--</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="auto-refresh-indicator">
+                        <span class="refresh-icon">🔄</span>
+                        <span>Auto-refreshing every 3 seconds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-     <script src="js/api.js"></script>
+
+    <!-- Loading Overlay (initially hidden) -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-light">Initializing dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- NetWatch JavaScript Modules -->
+    <script src="js/api.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
