@@ -1,63 +1,12 @@
-"""
-monitor.py - Network Packet Capture Engine
-============================================
+from scapy.all import sniff, IP, TCP, UDP, Ether
+from queue import Queue, Empty
+import threading
+import logging
+from config import NETWORK_INTERFACE, PACKET_BATCH_SIZE
+from packet_capture.parser import parse_packet
+from database.db_handler import save_packet
 
-This module implements the core packet capture functionality using Scapy.
 
-OWNER: Member 4 (Packet Capture Developer)
-
-WHAT THIS FILE SHOULD CONTAIN:
-------------------------------
-1. Import statements:
-   - from scapy.all import sniff, IP, TCP, UDP, Ether
-   - from queue import Queue
-   - import threading
-   - from config import NETWORK_INTERFACE, PACKET_BATCH_SIZE
-   - from packet_capture.parser import parse_packet
-   - from database.db_handler import save_packet
-
-2. NetworkMonitor class:
-   
-   __init__(self, interface=None, packet_queue=None)
-   - Set the network interface (use config default if None)
-   - Create a Queue for buffering captured packets
-   - Initialize running flag to False
-   
-   start(self)
-   - Set running flag to True
-   - Start the packet capture in a background thread
-   - Start the packet processor in another background thread
-   - Log that monitoring has started
-   
-   stop(self)
-   - Set running flag to False
-   - Wait for threads to finish
-   - Log that monitoring has stopped
-   
-   _capture_packets(self)
-   - The main capture loop
-   - Uses scapy.sniff() with a callback function
-   - The callback puts each packet in the queue
-   - Runs until running flag is False
-   
-   _packet_callback(self, packet)
-   - Called by Scapy for each captured packet
-   - Parse the packet using parser.parse_packet()
-   - Put the parsed data in the queue
-   
-   _process_packets(self)
-   - The processor loop running in a background thread
-   - Reads packets from the queue
-   - Calls save_packet() from database module
-   - Handles queue empty gracefully
-
-3. Error handling:
-   - Catch PermissionError and log helpful message about admin rights
-   - Catch interface not found errors
-   - Handle keyboard interrupt for graceful shutdown
-
-EXAMPLE FUNCTION SIGNATURES:
-----------------------------
 class NetworkMonitor:
     def __init__(self, interface: str = None):
         self.interface = interface or NETWORK_INTERFACE
@@ -65,24 +14,82 @@ class NetworkMonitor:
         self.running = False
         self.capture_thread = None
         self.processor_thread = None
-    
+        self.stop_event = threading.Event()
+        self.logger = logging.getLogger(__name__)
+
     def start(self):
         '''Start packet capture and processing threads'''
-        pass
-    
+        if self.running:
+            self.logger.warning("Monitor is already running")
+            return
+        
+        self.running = True
+        self.stop_event.clear()
+        self.capture_thread = threading.Thread(target=self._capture_packets)
+        self.processor_thread = threading.Thread(target=self._process_packets)
+        self.capture_thread.daemon = True
+        self.processor_thread.daemon = True
+        self.capture_thread.start()
+        self.processor_thread.start()
+        self.logger.info(f"Started monitoring on interface: {self.interface}")
+
     def stop(self):
         '''Stop packet capture gracefully'''
-        pass
-    
+        if not self.running:
+            return
+        
+        self.running = False
+        self.stop_event.set()
+        if self.capture_thread:
+            self.capture_thread.join(timeout=2.0)
+        if self.processor_thread:
+            self.processor_thread.join(timeout=2.0)
+        self.logger.info("Monitoring stopped")
+
     def _capture_packets(self):
         '''Main capture loop using Scapy sniff'''
-        pass
-    
+        def stop_filter(packet):
+            return self.stop_event.is_set()
+
+        def packet_callback(packet):
+            self._packet_callback(packet)
+
+        try:
+            sniff(iface=self.interface, prn=packet_callback, stop_filter=stop_filter, store=0)
+        except PermissionError:
+            self.logger.error("Permission denied. Run as administrator/root to capture packets.")
+        except Exception as e:
+            if "no such device" in str(e).lower() or "interface" in str(e).lower():
+                self.logger.error(f"Interface '{self.interface}' not found. Check if it exists.")
+            else:
+                self.logger.error(f"Capture error: {e}")
+        finally:
+            self.running = False
+
     def _packet_callback(self, packet):
         '''Callback for each captured packet'''
-        pass
-    
+        try:
+            parsed_data = parse_packet(packet)
+            self.packet_queue.put(parsed_data)
+        except Exception as e:
+            self.logger.error(f"Error parsing packet: {e}")
+
     def _process_packets(self):
         '''Process packets from queue and save to database'''
-        pass
-"""
+        while self.running or not self.packet_queue.empty():
+            try:
+                batch = []
+                # Collect batch up to PACKET_BATCH_SIZE
+                for _ in range(PACKET_BATCH_SIZE):
+                    parsed_data = self.packet_queue.get(timeout=1.0)
+                    batch.append(parsed_data)
+                    self.packet_queue.task_done()
+                
+                # Save batch to database
+                save_packet(batch)  # Assuming save_packet handles list/batch
+                self.logger.debug(f"Processed batch of {len(batch)} packets")
+            except Empty:
+                continue
+            except Exception as e:
+                self.logger.error(f"Error processing packet: {e}")
+        self.logger.debug("Packet processor finished")

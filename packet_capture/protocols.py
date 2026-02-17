@@ -5,57 +5,64 @@ protocols.py - Protocol Detection
 This module detects application-layer protocols based on port numbers.
 
 OWNER: Member 4 (Packet Capture Developer)
+"""
 
-WHAT THIS FILE SHOULD CONTAIN:
-------------------------------
-1. Import statements:
-   - from config import PROTOCOL_PORTS
+# Try to import from config, fallback to local definition if not available
+try:
+    from config import PROTOCOL_PORTS
+except ImportError:
+    # Fallback protocol port mapping
+    PROTOCOL_PORTS = {
+        # Web
+        80: 'HTTP',
+        443: 'HTTPS',
+        8080: 'HTTP-ALT',
+        8443: 'HTTPS-ALT',
+        
+        # Email
+        25: 'SMTP',
+        465: 'SMTPS',
+        587: 'SMTP',
+        110: 'POP3',
+        995: 'POP3S',
+        143: 'IMAP',
+        993: 'IMAPS',
+        
+        # File Transfer
+        20: 'FTP-DATA',
+        21: 'FTP',
+        22: 'SSH',
+        23: 'TELNET',
+        
+        # Database
+        3306: 'MySQL',
+        5432: 'PostgreSQL',
+        1433: 'MSSQL',
+        27017: 'MongoDB',
+        6379: 'Redis',
+        
+        # Remote Access
+        3389: 'RDP',
+        5900: 'VNC',
+        
+        # DNS & Network
+        53: 'DNS',
+        67: 'DHCP',
+        68: 'DHCP',
+        123: 'NTP',
+        161: 'SNMP',
+        162: 'SNMP-TRAP',
+        
+        # Other Common
+        445: 'SMB',
+        139: 'NetBIOS',
+        389: 'LDAP',
+        636: 'LDAPS',
+    }
 
-2. detect_protocol(src_port, dst_port, raw_protocol) function:
-   - Takes source port, destination port, and raw protocol type
-   - Checks both ports against known port mappings
-   - Returns the detected protocol name as a string
-   
-   Logic:
-   - First check destination port (more commonly used)
-   - Then check source port (for response packets)
-   - If no match, return the raw protocol ('TCP', 'UDP')
-   - If no raw protocol, return 'UNKNOWN'
 
-3. Port mapping (use PROTOCOL_PORTS from config or define here):
-   - 80 → HTTP
-   - 443 → HTTPS
-   - 22 → SSH
-   - 21 → FTP
-   - 53 → DNS
-   - 25, 465, 587 → SMTP
-   - 110, 995 → POP3
-   - 143, 993 → IMAP
-   - 3306 → MySQL
-   - 5432 → PostgreSQL
-   - 3389 → RDP
-   - 23 → TELNET
-   - 67, 68 → DHCP
-   - 123 → NTP
-
-4. Helper functions:
-
-   get_protocol_by_port(port) -> str:
-   - Look up port in PROTOCOL_PORTS dictionary
-   - Return protocol name or None
-   
-   is_http_traffic(src_port, dst_port) -> bool:
-   - Check if traffic is HTTP/HTTPS
-   - Useful for filtering or categorization
-   
-   get_protocol_category(protocol_name) -> str:
-   - Categorize protocols: 'web', 'email', 'file_transfer', 'remote', 'other'
-   - Useful for grouping in analytics
-
-EXAMPLE FUNCTION SIGNATURES:
-----------------------------
 def detect_protocol(src_port: int, dst_port: int, raw_protocol: str = 'TCP') -> str:
-    '''
+    """
     Detect application-layer protocol from port numbers.
     
     Args:
@@ -65,24 +72,72 @@ def detect_protocol(src_port: int, dst_port: int, raw_protocol: str = 'TCP') -> 
     
     Returns:
         Protocol name string (e.g., 'HTTP', 'HTTPS', 'DNS', 'TCP')
-    '''
-    # Check destination port first
-    if dst_port in PROTOCOL_PORTS:
+    """
+    # Check destination port first (more commonly used for services)
+    if dst_port and dst_port in PROTOCOL_PORTS:
         return PROTOCOL_PORTS[dst_port]
     
-    # Check source port
-    if src_port in PROTOCOL_PORTS:
+    # Check source port (for response packets)
+    if src_port and src_port in PROTOCOL_PORTS:
         return PROTOCOL_PORTS[src_port]
     
     # Fall back to raw protocol
-    return raw_protocol or 'UNKNOWN'
+    return raw_protocol if raw_protocol else 'UNKNOWN'
+
 
 def get_protocol_by_port(port: int) -> str:
-    pass
+    """
+    Look up protocol by port number.
+    
+    Args:
+        port: Port number
+    
+    Returns:
+        Protocol name or None if not found
+    """
+    if port is None:
+        return None
+    return PROTOCOL_PORTS.get(port)
+
 
 def is_http_traffic(src_port: int, dst_port: int) -> bool:
-    pass
+    """
+    Check if traffic is HTTP or HTTPS.
+    
+    Args:
+        src_port: Source port number
+        dst_port: Destination port number
+    
+    Returns:
+        True if HTTP/HTTPS traffic, False otherwise
+    """
+    http_ports = {80, 443, 8080, 8443}
+    return (src_port in http_ports) or (dst_port in http_ports)
+
 
 def get_protocol_category(protocol_name: str) -> str:
-    pass
-"""
+    """
+    Get category for a protocol.
+    
+    Args:
+        protocol_name: Name of the protocol (e.g., 'HTTP', 'SSH')
+    
+    Returns:
+        Category string: 'web', 'email', 'file_transfer', 'remote', 
+                        'database', 'dns', 'network', 'other'
+    """
+    categories = {
+        'web': ['HTTP', 'HTTPS', 'HTTP-ALT', 'HTTPS-ALT'],
+        'email': ['SMTP', 'SMTPS', 'POP3', 'POP3S', 'IMAP', 'IMAPS'],
+        'file_transfer': ['FTP', 'FTP-DATA', 'SSH'],
+        'remote': ['SSH', 'TELNET', 'RDP', 'VNC'],
+        'dns': ['DNS'],
+        'database': ['MySQL', 'PostgreSQL', 'MSSQL', 'MongoDB', 'Redis'],
+        'network': ['DHCP', 'NTP', 'SNMP', 'SNMP-TRAP', 'LDAP', 'LDAPS'],
+    }
+    
+    for category, protocols in categories.items():
+        if protocol_name in protocols:
+            return category
+    
+    return 'other'
