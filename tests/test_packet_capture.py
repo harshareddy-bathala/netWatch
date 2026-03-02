@@ -130,9 +130,10 @@ class TestBPFFilterApplication:
     """Verify BPF filters are non-empty and mode-appropriate."""
 
     def test_hotspot_filter_applied(self, hotspot_mode):
+        """Hotspot uses empty BPF — all traffic on the dedicated ICS adapter belongs to the hotspot."""
         fm = FilterManager(hotspot_mode)
         flt = fm.get_validated_filter()
-        assert flt, "Hotspot BPF filter must not be empty"
+        assert flt == "", "Hotspot BPF filter should be empty (capture all on dedicated adapter)"
 
     def test_wifi_filter_applied(self, wifi_mode):
         fm = FilterManager(wifi_mode)

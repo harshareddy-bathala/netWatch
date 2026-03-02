@@ -157,10 +157,12 @@ class TestPublicNetworkMode:
 class TestFilterManager:
     """Tests for BPF filter generation and validation."""
 
-    def test_hotspot_filter_not_empty(self, hotspot_mode):
+    def test_hotspot_filter_allows_empty(self, hotspot_mode):
+        """Hotspot uses a dedicated ICS adapter — empty BPF captures all client traffic."""
         fm = FilterManager(hotspot_mode)
         flt = fm.get_validated_filter()
-        assert flt and len(flt) > 0
+        # Empty string is valid: the ICS virtual adapter only carries hotspot traffic
+        assert flt == ""
 
     def test_wifi_filter_not_empty(self, wifi_mode):
         fm = FilterManager(wifi_mode)

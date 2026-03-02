@@ -164,6 +164,7 @@ def _upsert_devices(devices, current_mode_name, local_ips=None):
         return
 
     all_local_ips = local_ips if local_ips is not None else get_all_local_ips()
+    all_local_macs = get_all_local_macs()
 
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -173,8 +174,10 @@ def _upsert_devices(devices, current_mode_name, local_ips=None):
             ip = dev.get('ip', '')
             vendor = dev.get('vendor', '')
 
-            # Skip our own device entirely (any local adapter IP)
+            # Skip our own device entirely (any local adapter IP or MAC)
             if ip and ip in all_local_ips:
+                continue
+            if mac and mac.upper().replace('-', ':') in all_local_macs:
                 continue
 
             # Security: alert on new/unknown devices
@@ -221,6 +224,7 @@ def _upsert_arp_cache_devices(devices, current_mode_name, set_active_mode=False,
         return
 
     all_local_ips = local_ips if local_ips is not None else get_all_local_ips()
+    all_local_macs = get_all_local_macs()
     own_subnet = None
     if state.interface_manager:
         try:
@@ -248,6 +252,11 @@ def _upsert_arp_cache_devices(devices, current_mode_name, set_active_mode=False,
 
             # Skip our own device (any local adapter IP)
             if ip and ip in all_local_ips:
+                continue
+
+            # Skip our own adapter MACs — prevents the host from appearing
+            # as a client device (e.g. hotspot virtual adapter MAC).
+            if mac and mac.upper().replace('-', ':') in all_local_macs:
                 continue
 
             # Skip devices outside the current subnet

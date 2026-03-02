@@ -11,9 +11,10 @@ and the Scapy ``sniff()`` call.  Responsibilities:
     4. Provide a ``tcpdump``-compatible test command for offline validation.
 
 **Critical rule:** The filter returned to the capture engine must NEVER be
-an empty string unless the mode is ``PortMirrorMode`` (which intentionally
-captures everything).  An empty filter on any other mode means the original
-bug (capturing all nearby WiFi traffic) is back.
+an empty string unless the mode is ``PortMirrorMode`` or ``HotspotMode``
+(both intentionally capture everything on their respective adapters).
+An empty filter on any other mode means the original bug (capturing all
+nearby WiFi traffic) is back.
 """
 
 import logging
@@ -52,19 +53,27 @@ class FilterManager:
         Return the BPF filter string for the current mode, validated.
 
         Raises ``ValueError`` if the filter is empty on a mode that must
-        have one (anything other than ``PortMirrorMode``).
+        have one (anything other than ``PortMirrorMode`` or ``HotspotMode``).
         """
         raw_filter = self._mode.get_bpf_filter()
         bpf = (raw_filter or "").strip()
 
         mode_name = self._mode.get_mode_name()
 
-        # Port mirror intentionally uses an empty filter
-        if mode_name == ModeName.PORT_MIRROR:
+        # Port mirror and hotspot intentionally use an empty filter.
+        # Port mirror: captures ALL traffic on a SPAN/mirror port.
+        # Hotspot: Windows ICS creates a dedicated virtual adapter (e.g.
+        # "Local Area Connection* 10") where ALL traffic belongs to the
+        # hotspot subnet — an empty filter is safe and required so that
+        # client traffic (not just gateway traffic) is captured.
+        if mode_name in (ModeName.PORT_MIRROR, ModeName.HOTSPOT):
             if not bpf:
-                logger.info("PortMirrorMode: empty BPF filter (capturing all traffic)")
+                logger.info(
+                    "%s: empty BPF filter (capturing all traffic on dedicated adapter)",
+                    mode_name.value,
+                )
             else:
-                logger.info("PortMirrorMode: BPF filter = '%s'", bpf)
+                logger.info("%s: BPF filter = '%s'", mode_name.value, bpf)
             return bpf
 
         # Every other mode MUST have a non-empty filter
@@ -123,7 +132,7 @@ class FilterManager:
         """
         bpf = self.get_validated_filter()
         if not bpf:
-            return True  # empty is valid for port mirror
+            return True  # empty is valid for port mirror / hotspot
 
         tcpdump = shutil.which("tcpdump") or shutil.which("windump")
         if not tcpdump:

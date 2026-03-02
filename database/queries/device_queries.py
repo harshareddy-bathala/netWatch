@@ -86,6 +86,41 @@ logger = logging.getLogger(__name__)
 _device_cache = TTLCache(ttl_seconds=15)
 
 
+def _strip_host_devices(devices: list) -> list:
+    """Remove the host machine's own entries from a device list.
+
+    Filters by both MAC **and** IP so that even if one detection method
+    fails (e.g. psutil can't read the hotspot virtual adapter MAC on
+    Windows), the other catches it.
+
+    In hotspot mode this is critical: the host IS the gateway
+    (192.168.137.1) and must never appear as a client device.
+    """
+    _current_mode_name = _nf._current_mode_name
+
+    # In restrictive modes (public_network) and ethernet the host is a
+    # device we want to track — don't strip.
+    is_restrictive = _current_mode_name in _RESTRICTIVE_MODES
+    is_ethernet = _current_mode_name == "ethernet"
+    if is_restrictive or is_ethernet:
+        return devices
+
+    # Collect all host MACs and IPs
+    local_macs = _detect_all_local_macs()
+    local_ips = _detect_all_local_ips()
+
+    def _is_host_device(d: dict) -> bool:
+        mac = (d.get("mac_address") or "").upper().replace("-", ":")
+        if mac and local_macs and mac in local_macs:
+            return True
+        ip = d.get("ip_address") or ""
+        if ip and local_ips and ip in local_ips:
+            return True
+        return False
+
+    return [d for d in devices if not _is_host_device(d)]
+
+
 # ---------------------------------------------------------------------------
 # Backward-compat: allow external code to read/write _current_mode_name etc.
 # via device_queries module (they now live in network_filters)
@@ -175,6 +210,13 @@ def get_active_device_count(minutes: int = 5, conn=None) -> int:
             our_ip = _detect_our_ip()
             if our_ip:
                 excluded_ips.append(our_ip)
+
+        # In hotspot mode the host IS the gateway — always exclude it
+        # regardless of SHOW_GATEWAY / SHOW_OWN_DEVICE settings.
+        if _current_mode_name == "hotspot":
+            for lip in _detect_all_local_ips():
+                if lip not in excluded_ips:
+                    excluded_ips.append(lip)
 
         if is_restrictive:
             gw = _get_gateway_ip()
@@ -490,7 +532,7 @@ def get_active_devices(minutes: int = 5, limit: int = 100) -> list:
                     d["total_bytes_formatted"] = _format_bytes(d.get("total_bytes", 0))
                     devices.append(d)
 
-            return devices
+            return _strip_host_devices(devices)
 
     except sqlite3.Error as e:
         logger.error("get_active_devices error: %s", e)
@@ -624,18 +666,8 @@ def get_all_devices(limit: int = 100, offset: int = 0, hours: int = 24) -> list:
                     d["total_bytes_formatted"] = _format_bytes(d.get("total_bytes", 0))
                     devices.append(d)
 
-            # Strip out any entry whose MAC matches a local adapter.
-            # Skip this in restrictive modes (public_network) where our own
-            # device IS the only one we want to show, and in ethernet mode
-            # where the host is a legitimate device on the LAN.
-            is_ethernet = _current_mode_name == "ethernet"
-            if not is_restrictive and not is_ethernet:
-                local_macs = _detect_all_local_macs()
-                if local_macs:
-                    devices = [
-                        d for d in devices
-                        if not (d.get("mac_address") or "").upper().replace("-", ":") in local_macs
-                    ]
+            # Strip out the host machine's own entries (by MAC + IP).
+            devices = _strip_host_devices(devices)
             return devices[:limit]
 
     except sqlite3.Error as e:
@@ -840,17 +872,8 @@ def get_top_devices(limit: int = 10, hours: int = 1) -> list:
                 d["today_sent"] = tu.get("today_sent", 0)
                 d["today_received"] = tu.get("today_received", 0)
 
-            # Strip out any entry whose MAC matches a local adapter.
-            # Same logic as get_all_devices() — skip for restrictive modes
-            # (public_network) and ethernet mode where the host is a device.
-            is_ethernet = _current_mode_name == "ethernet"
-            if not is_restrictive and not is_ethernet:
-                local_macs = _detect_all_local_macs()
-                if local_macs:
-                    results = [
-                        d for d in results
-                        if not (d.get("mac_address") or "").upper().replace("-", ":") in local_macs
-                    ]
+            # Strip out the host machine's own entries (by MAC + IP).
+            results = _strip_host_devices(results)
 
             _device_cache.set(cache_key, results)
             return results
