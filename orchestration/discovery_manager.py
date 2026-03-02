@@ -464,13 +464,17 @@ def _discovery_loop():
                             )
 
                         # 2. ARP cache scan (supplement)
+                        # NOTE: ARP cache may contain stale entries from
+                        # previously-connected devices, so we never set
+                        # active_mode here — only actively-probed devices
+                        # (ARP scan, ping sweep) get active_mode=True.
                         try:
                             cache_devices = discovery.arp_cache_scan()
                             _upsert_devices(cache_devices, current_mode_name, local_ips=_cycle_local_ips)
                             if is_discovery_only and cache_devices:
                                 _upsert_arp_cache_devices(
                                     cache_devices, current_mode_name,
-                                    set_active_mode=True,
+                                    set_active_mode=False,
                                     local_ips=_cycle_local_ips,
                                 )
                         except Exception:
@@ -497,7 +501,7 @@ def _discovery_loop():
                                         if is_discovery_only and cache2:
                                             _upsert_arp_cache_devices(
                                                 cache2, current_mode_name,
-                                                set_active_mode=True,
+                                                set_active_mode=False,
                                                 local_ips=_cycle_local_ips,
                                             )
                                     except Exception:
@@ -506,13 +510,15 @@ def _discovery_loop():
                                 logger.debug("Ping sweep error: %s", e)
 
                         # 4. Hotspot mode: get_connected_clients()
+                        # Uses _parse_arp_table() internally which may
+                        # include stale entries — don't set active_mode.
                         if mode and mode.get_mode_name().value == "hotspot":
                             try:
                                 clients = mode.get_connected_clients()
                                 if clients:
                                     _upsert_arp_cache_devices(
                                         clients, current_mode_name,
-                                        set_active_mode=True,
+                                        set_active_mode=False,
                                         local_ips=_cycle_local_ips,
                                     )
                             except Exception as e:

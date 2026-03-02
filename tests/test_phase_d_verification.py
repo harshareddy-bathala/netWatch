@@ -188,12 +188,12 @@ class TestHotspotVerification:
         d = proc._determine_direction("8.8.8.8", "192.168.137.2")
         assert d == "download"
 
-    def test_hotspot_bpf_contains_subnet(self):
-        """BPF should capture all IP traffic on the dedicated hotspot adapter."""
+    def test_hotspot_bpf_empty_for_full_capture(self):
+        """BPF should be empty to capture ALL traffic on the dedicated hotspot adapter."""
         info = _make_interface(ip="192.168.49.1", mask="255.255.255.0")
         mode = HotspotMode(info)
         bpf = mode.get_bpf_filter()
-        assert "ip" in bpf.lower()
+        assert bpf == ""
 
     def test_hotspot_arp_scan_allowed(self):
         info = _make_interface(ip="192.168.137.1", mask="255.255.255.0")

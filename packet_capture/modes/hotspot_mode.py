@@ -70,27 +70,31 @@ class HotspotMode(BaseMode):
 
     def get_bpf_filter(self) -> str:
         """
-        BPF filter for hotspot mode — capture ALL IP traffic on this adapter.
+        BPF filter for hotspot mode — capture ALL traffic on this adapter.
 
         The hotspot creates a **dedicated** virtual adapter (e.g.
         ``Local Area Connection* 10`` on Windows ICS, ``bridge100`` on macOS).
         All traffic on this adapter belongs to the hotspot — there is no risk
         of capturing unrelated traffic from other networks.
 
-        Using a broad ``ip or ip6`` filter instead of ``net <subnet>`` ensures
-        we capture:
+        Uses an **empty filter** (capture everything) instead of ``ip or ip6``
+        so we never miss traffic due to Ethernet-type mismatches on Windows
+        ICS virtual adapters.  The PacketProcessor already ignores non-IP
+        frames (returns None), so the only cost is a few extra ARP/LLC
+        frames being dequeued and discarded — negligible on a hotspot adapter
+        serving a handful of clients.
 
-        * **DHCP DISCOVER/REQUEST** (0.0.0.0 → 255.255.255.255) — essential
-          for passive hostname learning via DHCP Option 12.
-        * **All forwarded traffic** regardless of NAT stage — on some Windows
-          versions the ``net <subnet>`` filter can miss packets that haven't
-          been fully translated yet.
-        * **IPv6 traffic** from connected clients (streaming, etc.).
+        This approach ensures we capture:
 
-        Subnet-based direction detection and device filtering are handled
-        independently by ``PacketProcessor`` using ``get_valid_ip_range()``.
+        * **All NATted data traffic** — on some Windows ICS adapters, the
+          ``ip`` BPF token (= ``ether proto 0x0800``) can miss frames whose
+          Ethernet type isn't set to the standard value by the virtual adapter
+          driver.  An empty filter bypasses this entirely.
+        * **DHCP DISCOVER/REQUEST** (broadcast) for passive hostname learning.
+        * **IPv6 traffic** from connected clients.
+        * **ARP** frames for device discovery.
         """
-        return "ip or ip6"
+        return ""
 
     def get_valid_ip_range(self) -> Optional[str]:
         return self._hotspot_subnet

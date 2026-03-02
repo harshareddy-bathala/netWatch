@@ -44,15 +44,15 @@ class TestHotspotMode:
     def test_hotspot_uses_promiscuous(self, hotspot_mode):
         assert hotspot_mode.should_use_promiscuous() is True
 
-    def test_hotspot_bpf_filter_not_empty(self, hotspot_mode):
+    def test_hotspot_bpf_filter_empty(self, hotspot_mode):
+        """Hotspot uses empty BPF to capture ALL traffic on the dedicated adapter."""
         bpf = hotspot_mode.get_bpf_filter()
-        assert bpf and len(bpf) > 0
+        assert bpf == ""
 
-    def test_hotspot_bpf_contains_subnet(self, hotspot_mode):
+    def test_hotspot_bpf_no_subnet_restriction(self, hotspot_mode):
         bpf = hotspot_mode.get_bpf_filter()
-        # Hotspot uses broad filter to capture all IP traffic on the
-        # dedicated virtual adapter (no subnet restriction needed).
-        assert "ip" in bpf.lower()
+        # Empty filter = capture everything, no subnet restriction.
+        assert bpf == ""
 
     def test_hotspot_valid_ip_range(self, hotspot_mode):
         ip_range = hotspot_mode.get_valid_ip_range()
