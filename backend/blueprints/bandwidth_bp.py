@@ -57,7 +57,7 @@ def get_dashboard():
     if engine and engine.is_running:
         # ── Fast path: in-memory state ──────────────────────────────
         mem = dashboard_state.snapshot()
-        bw_stats = engine.bandwidth.get_recent_rate(seconds=5)
+        bw_stats = engine.bandwidth.get_stats()
 
         result = {
             'stats': {
@@ -70,7 +70,7 @@ def get_dashboard():
                 'download_bps': round(bw_stats['download_bps'] * 8, 2),
                 'upload_mbps': bw_stats['upload_mbps'],
                 'download_mbps': bw_stats['download_mbps'],
-                'packets_per_second': engine.bandwidth.get_stats()['packets_per_second'],
+                'packets_per_second': bw_stats['packets_per_second'],
             },
             'health': mem.get('health_score', {'score': 0, 'status': 'unknown'}),
             'devices': mem.get('top_devices', []),
@@ -353,20 +353,22 @@ def _build_sse_payload() -> str:
             pass
 
         # Build stats dict from in-memory bandwidth + state
-        # Use get_recent_rate(5) for the card so the displayed value
-        # matches the chart's latest 5-second bucket (not the 30 s average
-        # which dilutes bursts and causes the card-vs-chart mismatch).
+        # Use get_stats() (30-second sliding window) for the card.
+        # YouTube DASH and similar adaptive-bitrate protocols download in
+        # short 2-4s bursts separated by 10-15s pauses.  A 5-second window
+        # oscillates wildly between burst-peak and zero; the 30s window
+        # always contains 2-3 bursts, producing a stable average that
+        # matches the actual sustained throughput.
         stats = {}
         if engine and engine.is_running:
-            bw = engine.bandwidth.get_recent_rate(seconds=5)
-            bw_full = engine.bandwidth.get_stats()
+            bw = engine.bandwidth.get_stats()
             stats['bandwidth_bps'] = round(bw['total_bps'] * 8, 2)
             stats['bandwidth_mbps'] = bw['total_mbps']
             stats['upload_bps'] = round(bw['upload_bps'] * 8, 2)
             stats['download_bps'] = round(bw['download_bps'] * 8, 2)
             stats['upload_mbps'] = bw['upload_mbps']
             stats['download_mbps'] = bw['download_mbps']
-            stats['packets_per_second'] = bw_full['packets_per_second']
+            stats['packets_per_second'] = bw['packets_per_second']
         elif live_bw is not None:
             stats['bandwidth_bps'] = round(live_bw * 8, 2)
             stats['bandwidth_mbps'] = round((live_bw * 8) / 1_000_000, 4)
@@ -419,7 +421,7 @@ def _build_sse_payload() -> str:
         if engine and engine.is_running:
             try:
                 live_points = engine.bandwidth.get_recent_history(
-                    bucket_seconds=5, max_points=40,
+                    bucket_seconds=10, max_points=20,
                 )
                 if live_points:
                     # Cut-over: keep DB points before the first live timestamp,
